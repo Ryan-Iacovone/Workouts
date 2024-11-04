@@ -9,7 +9,7 @@ conn = st.connection("gsheets", type=GSheetsConnection)
 # Read in the public google sheet file
 workout = conn.read()
 
-#Catching any extra spaces when I typed in workouts 
+# Stripping any extra spaces in workouts column 
 workout["Exercise"] = workout["Exercise"].str.strip()
 
 # Can use HTML to center header
@@ -17,33 +17,36 @@ st.markdown("<h1 style='text-align: center; color: black;'>Workout Site</h1>", u
 st.divider()
 
 
+# Filtering single workouts 
 st.subheader("Workout filter")
 
-# Get unique values from the column you want to filter on
+# Save unique exercises into list
 filter_options = sorted(workout['Exercise'].unique().tolist())
 
-# Create a selectbox with search functionality, use multiselect for selecting multiple options at once
+# Create a selectbox with search functionality. Use multiselect for selecting multiple options at once
 filter_var = st.selectbox("Choose Workout:", filter_options)
 
-# Filter the dataframe based on the selection
+# Filter the dataframe based on user selection
 filtered_df = workout[workout['Exercise'] == filter_var]
 
+# Show filtered df in streamlit 
 st.dataframe(filtered_df, width=None, hide_index = True, column_order=['Timestamp', 'Exercise', 'Weight', 
                                                                     'Sets', 'Reps', 'Effort Level'])
 
 
+# Showing last 3 workouts 
 st.subheader("Last 3 Workouts", divider="green")
 
-# Filter to last 3 workout days 
+# Change timestamp variable to datetime and then save it a date string 
 workout['Timestamp'] = pd.to_datetime(workout['Timestamp'])
 workout['date'] = workout['Timestamp'].dt.strftime('%b %d, %Y')
 
-# Gets the last 3 items from our list
+# Gets the last 3 dates I worked out
 last_three_dates = workout['date'].unique().tolist()[-3:]
 
-#Create the last 3 workout dates df to display
+# Creates filtered df based off of the last three dates I worked out 
 threeeee = workout[workout['date'].isin(last_three_dates)]  
 
-#Displayed
+# display the last 3 workouts df
 st.dataframe(threeeee, width=None, hide_index = True, column_order=['date', 'Exercise', 'Weight', 
                                                                     'Sets', 'Reps', 'Effort Level'])
