@@ -1,21 +1,17 @@
 import os
 import pandas as pd
 import streamlit as st
-from dotenv import load_dotenv
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-# Load environment variables from .env file
-load_dotenv()
-
 # If modifying these scopes, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
 
 # The ID and range of a sample spreadsheet.
-SPREADSHEET_ID = os.getenv("sheet_id")
+SPREADSHEET_ID = st.secrets["sheet_id"]
 
 def read_in_google_sheet():
   """Shows basic usage of the Sheets API.
