@@ -1,0 +1,51 @@
+FileNotFoundError: [Errno 2] No such file or directory: 'credentials.json'
+The error you're encountering is due to the credentials.json file not being found in your Streamlit Community Cloud environment. This is because you've hidden it from your GitHub repository for security reasons, which is a good practice. However, Streamlit Community Cloud needs access to this file to authenticate with Google services.
+To solve this issue, you should use Streamlit's secrets management feature. Here's how you can do it:
+First, don't include the credentials.json file in your GitHub repository.
+Instead, create a secrets.toml file in the .streamlit folder of your local project. This file should not be committed to GitHub either.
+In the secrets.toml file, add the contents of your credentials.json file as a JSON string. It should look something like this:
+
+[google_credentials]
+contents = '''
+{
+  "type": "service_account",
+  "project_id": "your-project-id",
+  "private_key_id": "your-private-key-id",
+  "private_key": "your-private-key",
+  ...
+}
+'''
+In your Streamlit app code, replace the InstalledAppFlow.from_client_secrets_file() call with code that uses st.secrets. Here's an example:
+
+import json
+import streamlit as st
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import Flow
+
+# ... your other imports and code ...
+
+def read_in_google_sheet():
+    creds = None
+    if 'google_credentials' in st.secrets:
+        creds_dict = json.loads(st.secrets['google_credentials']['contents'])
+        creds = Credentials.from_authorized_user_info(creds_dict, SCOPES)
+    
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = Flow.from_client_config(
+                json.loads(st.secrets['google_credentials']['contents']),
+                SCOPES
+            )
+            creds = flow.run_local_server(port=0)
+    
+    # ... rest of your function ...
+
+# ... rest of your code ...
+After making these changes, go to your Streamlit Community Cloud dashboard. In your app's settings, find the "Secrets" section.
+Copy the contents of your local secrets.toml file into the Secrets field in the Streamlit Community Cloud dashboard.
+Save the changes and redeploy your app.
+This approach allows you to securely store your Google credentials without exposing them in your GitHub repository. Streamlit will securely manage these secrets and make them available to your app at runtime.
+For more information on how to manage secrets in Streamlit Community Cloud, you can refer to the Streamlit documentation on secrets management.
+Remember to never commit your secrets.toml file or any file containing sensitive information to your GitHub repository.

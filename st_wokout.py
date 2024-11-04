@@ -17,11 +17,11 @@ def read_in_google_sheet():
   """Shows basic usage of the Sheets API.
   Prints values from a sample spreadsheet.
   """
-  creds = None
+  creds = st.secrets["token"]
   # The file token.json stores the user's access and refresh tokens, and is
   # created automatically when the authorization flow completes for the first
   # time.
-  if os.path.exists("token.json"):
+  """if os.path.exists("token.json"):
     creds = Credentials.from_authorized_user_file("token.json", SCOPES)
   # If there are no (valid) credentials available, let the user log in.
   if not creds or not creds.valid:
@@ -35,7 +35,7 @@ def read_in_google_sheet():
     # Save the credentials for the next run
     with open("token.json", "w") as token:
       token.write(creds.to_json())
-
+"""
   try:
     service = build("sheets", "v4", credentials=creds)
 
