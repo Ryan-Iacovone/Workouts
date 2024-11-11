@@ -3,6 +3,12 @@ import pandas as pd
 import streamlit as st
 from streamlit_gsheets import GSheetsConnection
 
+# Set streamlit page to automatically open in wide mode (helps for phone view) plus extra title details on browser
+st.set_page_config(
+    page_title="Workout Site",
+    page_icon="💪",
+    layout="wide")
+
 # Create a connection object.
 conn = st.connection("gsheets", type=GSheetsConnection)
 
@@ -12,8 +18,12 @@ workout = conn.read()
 # Stripping any extra spaces in workouts column 
 workout["Exercise"] = workout["Exercise"].str.strip()
 
+link = st.secrets["connections"]["gsheets"]["spreadsheet"]
+
 # Can use HTML to center header
 st.markdown("<h1 style='text-align: center; color: black;'>Workout Site</h1>", unsafe_allow_html=True)
+# HTML with link
+#st.markdown(f"<h1 style='text-align: center; color: black;'><a href='{link}'>Workout Site</a></h1>", unsafe_allow_html=True)
 st.divider()
 
 
