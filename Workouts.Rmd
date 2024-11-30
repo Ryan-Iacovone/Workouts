@@ -20,7 +20,11 @@ workout <-workout %>% mutate(twm = Weight*Sets*Reps)
 
 # Graphs 
 ```{r}
-activity <- "Db skull crusher" #What workout I want to analyze
+# List of exercises 
+workout %>% distinct(Exercise)
+
+
+activity <- "Db skull crushers" #What workout I want to analyze
 filtered_db <- workout %>% filter(Exercise == activity)
 
 ggplot(filtered_db, aes(date, Weight)) +
