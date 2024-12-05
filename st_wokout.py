@@ -61,7 +61,6 @@ threeeee = workout[workout['date'].isin(last_three_dates)]
 st.dataframe(threeeee, width=None, hide_index = True, column_order=['date', 'Exercise', 'Weight', 
                                                                     'Sets', 'Reps', 'Effort Level'])
 
-
 # Created a way to show effort level key and then hide it while clicking the same button
 
 # Initialize the state
@@ -71,6 +70,9 @@ if 'show_content' not in st.session_state:
 # Define a function to toggle the state
 def toggle_content():
     st.session_state.show_content = not st.session_state.show_content
+
+# Adding in some hrml to create a beak
+st.markdown("<br>", unsafe_allow_html=True)
 
 # Create a button that toggles the content
 if st.button('Show Effort Level Key', on_click=toggle_content):
