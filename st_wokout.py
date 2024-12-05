@@ -60,3 +60,28 @@ threeeee = workout[workout['date'].isin(last_three_dates)]
 # display the last 3 workouts df
 st.dataframe(threeeee, width=None, hide_index = True, column_order=['date', 'Exercise', 'Weight', 
                                                                     'Sets', 'Reps', 'Effort Level'])
+
+
+# Created a way to show effort level key and then hide it while clicking the same button
+
+# Initialize the state
+if 'show_content' not in st.session_state:
+    st.session_state.show_content = False
+
+# Define a function to toggle the state
+def toggle_content():
+    st.session_state.show_content = not st.session_state.show_content
+
+# Create a button that toggles the content
+if st.button('Show Effort Level Key', on_click=toggle_content):
+    pass
+
+# Display content based on the state
+if st.session_state.show_content:
+    effort_dict = {"4": "No effort", "5": "Easy", "6": "Moderate effort", "7": "Sweet spot, feel confident", "8": "Moderatly challenging but still completed", 
+                   "9": "Very challenging, DNC", "10": "Extremely challenging, DNC, go down"}
+
+    effort_df = pd.DataFrame(list(effort_dict.items()), columns=['Effort Rating', 'Description'], index=None)
+
+    # Display effort key as a df in streamlit
+    st.dataframe(effort_df, hide_index = True)
