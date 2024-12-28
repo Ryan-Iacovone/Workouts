@@ -21,13 +21,18 @@ workout <-workout %>% mutate(twm = Weight*Sets*Reps)
 # Graphs 
 ```{r}
 # List of exercises 
-workout %>% distinct(Exercise)
+workout %>% distinct(Exercise) 
 
 
-activity <- "Db skull crushers" #What workout I want to analyze
+activity <- "Chest press machine" # What workout I want to analyze
 filtered_db <- workout %>% filter(Exercise == activity)
 
 ggplot(filtered_db, aes(date, Weight)) +
+  geom_line() +
+  geom_point()
+
+
+ggplot(filtered_db, aes(date, twm)) +
   geom_line() +
   geom_point()
 ```
