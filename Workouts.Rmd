@@ -14,7 +14,6 @@ workout <- workout %>% rename(date = Timestamp) %>% mutate(date = as.Date(date))
 
 # Adding in a variable called TWM - total weight moved
 workout <-workout %>% mutate(twm = Weight*Sets*Reps)
-
 ```
 
 
