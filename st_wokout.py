@@ -17,85 +17,15 @@ conn = st.connection("gsheets", type=GSheetsConnection)
 # Read in the public google sheet file
 workout = conn.read()
 
-# Stripping any extra spaces in workouts column 
+# Pre emptive data cleaning stripping any extra spaces in workouts column and Timestamp variable to datetime
 workout["Exercise"] = workout["Exercise"].str.strip()
+workout['Timestamp'] = pd.to_datetime(workout['Timestamp'])
 
 # Can use HTML to center header
 st.markdown("<h1 style='text-align: center; color: black;'>Workout Site</h1>", unsafe_allow_html=True)
 # HTML with link
 #st.markdown(f"<h1 style='text-align: center; color: black;'><a href='{link}'>Workout Site</a></h1>", unsafe_allow_html=True)
 st.divider()
-
-
-####### Signle workouts filter ####### 
-with st.expander("🎯 Specific Exercise Filter", expanded=True):
-    st.subheader("Specific Exercise Filter")
-
-    # Save unique exercises into list
-    filter_options = sorted(workout['Exercise'].unique().tolist())
-
-    # Create a selectbox with search functionality. Use multiselect for selecting multiple options at once
-    filter_var = st.selectbox("Choose Exercise:", filter_options)
-
-    # Filter the dataframe based on user selection
-    filtered_df = workout[workout['Exercise'] == filter_var]
-
-    # Show filtered df in streamlit, show index column for later filtering
-    st.dataframe(filtered_df, width=None, hide_index = False, column_order=[ 'Index', 'Timestamp', 'Exercise', 'Weight', 
-                                                                        'Sets', 'Reps', 'Effort Level'])
-
-
-####### Extracting the core name of the excerise #######
-
-st.subheader("Muscle Group Anlaysis")
-
-# need the .str[0] because I'm applying the split method to a pandas series
-workout["core_name"] = workout["Exercise"].str.split(" ").str[0]
-
-# Show last 4 -5 workouts by muscle group
-
-# Save unique exercises into list
-core_options = sorted(workout['core_name'].unique().tolist())
-
-# Create a selectbox with search functionality. Use multiselect for selecting multiple options at once
-core_var = st.selectbox("Choose Workout Group:", core_options)
-
-# Filter the dataframe based on user selection and grab the last 6 workouts in that core area
-core_filtered = workout[workout['core_name'] == core_var].tail(6)
-
-# Show filtered df in streamlit 
-st.dataframe(core_filtered, width=None, hide_index = True, column_order=['Timestamp', 'Exercise', 'Weight', 
-                                                                    'Sets', 'Reps', 'Effort Level'])
-
-
-####### Last 3 times I worked out ####### 
-st.subheader("Last 3 Workouts", divider="green")
-
-# Change timestamp variable to datetime and then save it a date string 
-workout['Timestamp'] = pd.to_datetime(workout['Timestamp'])
-workout['date'] = workout['Timestamp'].dt.strftime('%b %d, %Y')
-
-# Gets the last 3 dates I worked out
-last_three_dates = workout['date'].unique().tolist()[-3:]
-
-# Creates filtered df based off of the last three dates I worked out 
-threeeee = workout[workout['date'].isin(last_three_dates)]  
-
-# display the last 3 workouts df
-st.dataframe(threeeee, width=None, hide_index = True, column_order=['date', 'Exercise', 'Weight', 
-                                                                    'Sets', 'Reps', 'Effort Level'])
-
-
-######## Comment Extractor ########
-st.subheader("Comment Extractor")
-
-number = st.number_input("Pick a number", value=50, step=1, min_value=0, max_value=max(workout.index))
-
-filtered_index = pd.DataFrame(workout.iloc[[number]])  
-
-# Show filtered df in streamlit 
-st.dataframe(filtered_index, width=None, hide_index = False, column_order=['Timestamp', 'Exercise', 'Notes:'])
-
 
 ####### Workout Calendar ####### 
 
@@ -180,13 +110,85 @@ with col3:
         avg_workouts = workout[workout['Timestamp'].dt.strftime('%B') == current_month]['Exercise'].count() / this_month
         st.metric("Avg Exercises/Day", f"{avg_workouts:.1f}")
 
-with st.expander("📅 Workout Calendar", expanded=True):
+with st.expander("📅 Workout Calendar", expanded=False):
     st.write("Days highlighted in green show when you worked out!")
     
     # Prepare and display calendar
     calendar_events = prepare_calendar_data(workout)
     calendar_options = create_calendar_config(calendar_events)
     calendar(calendar_options)
+
+
+####### Single workouts filter ####### 
+with st.expander("🎯 Specific Exercise Filter", expanded=True):
+    st.subheader("Specific Exercise Filter")
+
+    # Save unique exercises into list
+    filter_options = sorted(workout['Exercise'].unique().tolist())
+
+    # Create a selectbox with search functionality. Use multiselect for selecting multiple options at once
+    filter_var = st.selectbox("Choose Exercise:", filter_options)
+
+    # Filter the dataframe based on user selection
+    filtered_df = workout[workout['Exercise'] == filter_var]
+
+    # Show filtered df in streamlit, show index column for later filtering
+    st.dataframe(filtered_df, width=None, hide_index = False, column_order=[ 'Index', 'Timestamp', 'Exercise', 'Weight', 
+                                                                        'Sets', 'Reps', 'Effort Level'])
+
+
+####### Extracting the core name of the excerise #######
+with st.expander("💪 Muscle Group Analysis", expanded=False):
+    st.subheader("Muscle Group Anlaysis")
+
+    # need the .str[0] because I'm applying the split method to a pandas series
+    workout["core_name"] = workout["Exercise"].str.split(" ").str[0]
+
+    # Show last 4 -5 workouts by muscle group
+
+    # Save unique exercises into list
+    core_options = sorted(workout['core_name'].unique().tolist())
+
+    # Create a selectbox with search functionality. Use multiselect for selecting multiple options at once
+    core_var = st.selectbox("Choose Workout Group:", core_options)
+
+    # Filter the dataframe based on user selection and grab the last 6 workouts in that core area
+    core_filtered = workout[workout['core_name'] == core_var].tail(6)
+
+    # Show filtered df in streamlit 
+    st.dataframe(core_filtered, width=None, hide_index = True, column_order=['Timestamp', 'Exercise', 'Weight', 
+                                                                        'Sets', 'Reps', 'Effort Level'])
+
+
+####### Last 3 times I worked out ####### 
+with st.expander("📅 Last 3 Workouts", expanded=False):
+    st.subheader("Last 3 Workouts", divider="green")
+
+    # Change timestamp variable to datetime and then save it a date string 
+    workout['Timestamp'] = pd.to_datetime(workout['Timestamp'])
+    workout['date'] = workout['Timestamp'].dt.strftime('%b %d, %Y')
+
+    # Gets the last 3 dates I worked out
+    last_three_dates = workout['date'].unique().tolist()[-3:]
+
+    # Creates filtered df based off of the last three dates I worked out 
+    threeeee = workout[workout['date'].isin(last_three_dates)]  
+
+    # display the last 3 workouts df
+    st.dataframe(threeeee, width=None, hide_index = True, column_order=['date', 'Exercise', 'Weight', 
+                                                                        'Sets', 'Reps', 'Effort Level'])
+
+
+######## Comment Extractor ########
+with st.expander("📝 Comment Extractor", expanded=False):
+    st.subheader("Comment Extractor")
+
+    number = st.number_input("Pick a number", value=50, step=1, min_value=0, max_value=max(workout.index))
+
+    filtered_index = pd.DataFrame(workout.iloc[[number]])  
+
+    # Show filtered df in streamlit 
+    st.dataframe(filtered_index, width=None, hide_index = False, column_order=['Timestamp', 'Exercise', 'Notes:'])
 
 
 ######## Effort level key and then hide it while clicking the same button ########
