@@ -1,7 +1,9 @@
-import os
 import pandas as pd
+import datetime
+import os
 import streamlit as st
 from streamlit_gsheets import GSheetsConnection
+from streamlit_calendar import calendar
 
 # Set streamlit page to automatically open in wide mode (helps for phone view) plus extra title details on browser
 st.set_page_config(
@@ -26,20 +28,21 @@ st.divider()
 
 
 ####### Signle workouts filter ####### 
-st.subheader("Specific Exercise Filter")
+with st.expander("🎯 Specific Exercise Filter", expanded=True):
+    st.subheader("Specific Exercise Filter")
 
-# Save unique exercises into list
-filter_options = sorted(workout['Exercise'].unique().tolist())
+    # Save unique exercises into list
+    filter_options = sorted(workout['Exercise'].unique().tolist())
 
-# Create a selectbox with search functionality. Use multiselect for selecting multiple options at once
-filter_var = st.selectbox("Choose Exercise:", filter_options)
+    # Create a selectbox with search functionality. Use multiselect for selecting multiple options at once
+    filter_var = st.selectbox("Choose Exercise:", filter_options)
 
-# Filter the dataframe based on user selection
-filtered_df = workout[workout['Exercise'] == filter_var]
+    # Filter the dataframe based on user selection
+    filtered_df = workout[workout['Exercise'] == filter_var]
 
-# Show filtered df in streamlit, show index column for later filtering
-st.dataframe(filtered_df, width=None, hide_index = False, column_order=[ 'Index', 'Timestamp', 'Exercise', 'Weight', 
-                                                                    'Sets', 'Reps', 'Effort Level'])
+    # Show filtered df in streamlit, show index column for later filtering
+    st.dataframe(filtered_df, width=None, hide_index = False, column_order=[ 'Index', 'Timestamp', 'Exercise', 'Weight', 
+                                                                        'Sets', 'Reps', 'Effort Level'])
 
 
 ####### Extracting the core name of the excerise #######
@@ -94,6 +97,98 @@ filtered_index = pd.DataFrame(workout.iloc[[number]])
 st.dataframe(filtered_index, width=None, hide_index = False, column_order=['Timestamp', 'Exercise', 'Notes:'])
 
 
+####### Workout Calendar ####### 
+
+# Grabs all unique workout dates and the number of exercises assoicated with each 
+def prepare_calendar_data(workout_df):
+
+    # Convert timestamps to datetime variable
+    workout_df['Timestamp'] = pd.to_datetime(workout_df['Timestamp'])
+
+    # Get unique dates when workouts occurred
+    workout_dates = workout_df['Timestamp'].dt.date.unique() # dt.date changes it to just the date
+
+    # Create calendar events
+    calendar_events = []
+    for date in workout_dates:
+        # Counting the number of exercises completed on each unique date
+        daily_workouts = len(workout_df[workout_df['Timestamp'].dt.date == date]) 
+        
+        # Create event dicitonary to add to calendar events
+        event = {
+            'title': f'{daily_workouts} Exercises',
+            'start': date.isoformat(),
+            'backgroundColor': '#28a745',  # Green color 
+            'textColor': 'white',
+            'display': 'background'  # This makes it show as a highlighted day
+        }
+        calendar_events.append(event)
+
+    return calendar_events
+
+# customizable options fo rhow to visual congfure the calendar
+def create_calendar_config(events):
+    calendar_options = {
+        "headerToolbar": {
+            "left": "prev,next",
+            "center": "title",
+            "right": "Today"
+        },
+        "initialView": "dayGridMonth",
+        "selectable": True,
+        "events": events,
+        "height": 400
+    }
+    
+    return calendar_options
+
+
+# Grabbing monthly exercise and workout statistics for this month and last month to be displayed
+def get_monthly_stats(workout_df):
+
+    # Get current and previous month
+    current_date = pd.Timestamp.now() # Returns current datetime 
+    current_month = current_date.strftime('%B') # Formats datetime as a month like "Febuary"
+    prev_month = (current_date - pd.DateOffset(months=1)).strftime('%B')
+
+    # Calculate workouts per month
+    monthly_counts = workout_df.set_index('Timestamp').resample('ME').size()
+
+    # Get last two months exercise counts based on the monthly_counts series above. Need to use 'dt.strftime('%B')' here because of how I formatted previous month above
+    this_month = len(workout_df[workout_df['Timestamp'].dt.strftime('%B') == current_month])
+    last_month = len(workout_df[workout_df['Timestamp'].dt.strftime('%B') == prev_month])
+    
+    return this_month, last_month, current_month, prev_month
+
+# Get monthly statistics and displays them in a card like format 
+this_month, last_month, current_month, prev_month = get_monthly_stats(workout)
+
+col1, col2, col3 = st.columns(3)
+
+# Exercises this month
+with col1:
+    st.metric(f"{current_month} Workouts", this_month, f"{this_month - last_month} vs last month") # st.metric takes (label, value, delta/change)
+
+# Monthly target for exercises  
+with col2:
+    days_in_month = pd.Timestamp.now().daysinmonth
+    st.metric("Monthly Target", days_in_month // 2, f"{this_month - (days_in_month // 2)} from target")
+
+# Average exercises per day
+with col3:
+    if this_month > 0:
+        avg_workouts = workout[workout['Timestamp'].dt.strftime('%B') == current_month]['Exercise'].count() / this_month
+        st.metric("Avg Exercises/Day", f"{avg_workouts:.1f}")
+
+with st.expander("📅 Workout Calendar", expanded=True):
+    st.write("Days highlighted in green show when you worked out!")
+    
+    # Prepare and display calendar
+    calendar_events = prepare_calendar_data(workout)
+    calendar_options = create_calendar_config(calendar_events)
+    calendar(calendar_options)
+
+
 ######## Effort level key and then hide it while clicking the same button ########
 
 # Initialize the state
@@ -113,8 +208,16 @@ if st.button('Show Effort Level Key', on_click=toggle_content):
 
 # Display content based on the state
 if st.session_state.show_content:
-    effort_dict = {"4": "No effort", "5": "Easy", "6": "Moderate effort", "7": "Sweet spot, feel confident", "8": "Moderatly challenging but still completed", 
-                   "9": "Very challenging, DNC", "10": "Extremely challenging, DNC, go down"}
+    effort_dict = {
+                "4": "No effort 😴",
+                "5": "Easy 🌟",
+                "6": "Moderate effort 💪",
+                "7": "Sweet spot, feel confident 🎯",
+                "8": "Moderately challenging but still completed 🔥",
+                "9": "Very challenging, DNC ⚠️",
+                "10": "Extremely challenging, DNC, go down ⛔"
+            }
+    
 
     effort_df = pd.DataFrame(list(effort_dict.items()), columns=['Effort Rating', 'Description'], index=None)
 
