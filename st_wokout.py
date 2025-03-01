@@ -110,7 +110,7 @@ with col3:
         avg_workouts = workout[workout['Timestamp'].dt.strftime('%B') == current_month]['Exercise'].count() / this_month
         st.metric("Avg Exercises/Day", f"{avg_workouts:.1f}")
 
-with st.expander("📅 Workout Calendar", expanded=False):
+with st.expander("📅 Workout Calendar", expanded=True):
     st.write("Days highlighted in green show when you worked out!")
     
     # Prepare and display calendar
